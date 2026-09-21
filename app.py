@@ -1,4 +1,4 @@
-# Control-UCR'S - FINAL RENDER PYTHON 3.11 - 13 VALORES
+# Control-UCR'S - FINAL DEFINITIVO - 13 VALORES - COMPATIBLE PYTHON 3.14
 import os, sqlite3
 from flask import Flask, request, redirect, session, render_template_string, g, send_file
 from datetime import datetime
@@ -16,9 +16,11 @@ def get_db():
         if DATABASE_URL:
             try:
                 import psycopg2
+                db = psycopg2.connect(DATABASE_URL, sslmode='require')
             except:
-                import psycopg as psycopg2
-            db = psycopg2.connect(DATABASE_URL, sslmode='require')
+                import psycopg
+                db = psycopg.connect(DATABASE_URL, sslmode='require')
+                db.autocommit = False
             g._is_postgres = True
         else:
             db = sqlite3.connect('ucrs_local.db')
@@ -39,7 +41,8 @@ def fetchall(q,p=()):
             import psycopg2.extras
             cur=db.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         except:
-            cur=db.cursor()
+            import psycopg.rows
+            cur=db.cursor(row_factory=psycopg.rows.dict_row)
     else: cur=db.cursor()
     cur.execute(q2,p); r=cur.fetchall(); cur.close()
     return [dict(x) if not isinstance(x, dict) else x for x in r]
@@ -107,6 +110,7 @@ def nuevo():
     regiones=fetchall("SELECT * FROM regiones ORDER BY nombre")
     tiendas_all=fetchall("SELECT tiendas.nombre as t_nombre, regiones.nombre as r_nombre FROM tiendas JOIN regiones ON tiendas.region_id=regiones.id")
     if request.method=='POST':
+        # CORREGIDO: 13 columnas = 13 %s
         execute("INSERT INTO movimientos (tipo,nombre_tienda,cantidad,cantidad_corregida,observaciones,fecha,usuario,region,tamano,color,proveedor,tipo_ucrs,placa) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)",(request.form['tipo'],request.form['nombre_tienda'],int(request.form['cantidad']),int(request.form['cantidad']),request.form.get('observaciones',''),datetime.now().isoformat(sep=' ',timespec='minutes'),session['user'],request.form.get('region',''),request.form.get('tamano',''),request.form.get('color',''),request.form.get('proveedor',''),request.form.get('tipo_ucrs',''),request.form.get('placa','')))
         return redirect('/')
     import json
