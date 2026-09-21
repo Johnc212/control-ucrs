@@ -1,6 +1,5 @@
-# Control-UCR'S - FULL FINAL CORREGIDO - Render + Windows
-import os
-import sqlite3
+# Control-UCR'S - FINAL CORREGIDO 13 VALORES - Render + Windows
+import os, sqlite3
 from flask import Flask, request, redirect, session, render_template_string, g, send_file
 from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -26,7 +25,6 @@ def get_db():
     return g._database
 
 def is_postgres(): return getattr(g, '_is_postgres', False)
-
 def adapt(q):
     if not is_postgres():
         return q.replace('%s','?').replace('SERIAL PRIMARY KEY','INTEGER PRIMARY KEY AUTOINCREMENT')
@@ -37,22 +35,15 @@ def fetchall(q,p=()):
     if is_postgres():
         import psycopg2.extras
         cur=db.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-    else:
-        cur=db.cursor()
+    else: cur=db.cursor()
     cur.execute(q2,p); r=cur.fetchall(); cur.close()
     return [dict(x) for x in r]
 
-def fetchone(q,p=()):
-    r=fetchall(q,p)
-    return r[0] if r else None
-
+def fetchone(q,p=()): r=fetchall(q,p); return r[0] if r else None
 def execute(q,p=()):
     db=get_db(); cur=db.cursor(); cur.execute(adapt(q),p); db.commit(); cur.close()
-
 def safe(r,k,d=""):
-    try:
-        v=r.get(k,d) if isinstance(r,dict) else d
-        return v if v is not None else d
+    try: v=r.get(k,d) if isinstance(r,dict) else d; return v if v is not None else d
     except: return d
 
 def init_db():
@@ -76,7 +67,7 @@ def login_required(f):
         return f(*a,**k)
     return w
 
-BASE='''<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"><style>body{background:#e9ecef;padding-bottom:70px;font-family:system-ui}.header-cedi{background:#E70A29;color:#fff;padding:10px 14px;font-weight:900;font-size:1.1rem}.card-mov{background:#fff;border:1px solid #dee2e6;border-radius:10px;margin-bottom:8px;box-shadow:0 1px 2px rgba(0,0,0,.05)}.footer{background:#111;color:#fff;text-align:center;padding:10px;position:fixed;bottom:0;left:0;right:0;z-index:999;font-size:.85rem;letter-spacing:.5px}</style></head><body><nav class="navbar bg-white shadow-sm" style="border-bottom:5px solid #E70A29"><div class="container-fluid px-3"><b style="font-size:1.2rem">Control-UCR'S</b><div class="d-flex gap-1 align-items-center"><small class="me-2">{{session.user}} ({{session.role}})</small><a href="/" class="btn btn-sm btn-dark">Inicio</a>{% if session.role=='admin' %}<a href="/configuracion" class="btn btn-sm btn-secondary">Config</a><a href="/exportar" class="btn btn-sm btn-success">Excel</a>{% endif %}<a href="/logout" class="btn btn-sm btn-outline-danger">Salir</a></div></div></nav><div class="container-fluid mt-3 px-2">{{content|safe}}</div><div class="footer">Desarrollado por John Carmona</div></body></html>'''
+BASE='''<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"><style>body{background:#e9ecef;padding-bottom:70px;font-family:system-ui}.header-cedi{background:#E70A29;color:#fff;padding:10px 14px;font-weight:900;font-size:1.1rem}.card-mov{background:#fff;border:1px solid #dee2e6;border-radius:10px;margin-bottom:8px;box-shadow:0 1px 2px rgba(0,0,0,.05)}.footer{background:#111;color:#fff;text-align:center;padding:10px;position:fixed;bottom:0;left:0;right:0;z-index:999;font-size:.85rem}</style></head><body><nav class="navbar bg-white shadow-sm" style="border-bottom:5px solid #E70A29"><div class="container-fluid px-3"><b style="font-size:1.2rem">Control-UCR'S</b><div class="d-flex gap-1 align-items-center"><small class="me-2">{{session.user}} ({{session.role}})</small><a href="/" class="btn btn-sm btn-dark">Inicio</a>{% if session.role=='admin' %}<a href="/configuracion" class="btn btn-sm btn-secondary">Config</a><a href="/exportar" class="btn btn-sm btn-success">Excel</a>{% endif %}<a href="/logout" class="btn btn-sm btn-outline-danger">Salir</a></div></div></nav><div class="container-fluid mt-3 px-2">{{content|safe}}</div><div class="footer">Desarrollado por John Carmona</div></body></html>'''
 
 @app.route('/login', methods=['GET','POST'])
 def login():
@@ -112,8 +103,8 @@ def nuevo():
     regiones=fetchall("SELECT * FROM regiones ORDER BY nombre")
     tiendas_all=fetchall("SELECT tiendas.nombre as t_nombre, regiones.nombre as r_nombre FROM tiendas JOIN regiones ON tiendas.region_id=regiones.id")
     if request.method=='POST':
-        # CORREGIDO: 13 columnas = 13 %s
-        execute("INSERT INTO movimientos (tipo,nombre_tienda,cantidad,cantidad_corregida,observaciones,fecha,usuario,region,tamano,color,proveedor,tipo_ucrs,placa) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)",(request.form['tipo'],request.form['nombre_tienda'],int(request.form['cantidad']),int(request.form['cantidad']),request.form.get('observaciones',''),datetime.now().isoformat(sep=' ',timespec='minutes'),session['user'],request.form.get('region',''),request.form.get('tamano',''),request.form.get('color',''),request.form.get('proveedor',''),request.form.get('tipo_ucrs',''),request.form.get('placa','')))
+        # 13 columnas = 13 %s - CORREGIDO
+        execute("INSERT INTO movimientos (tipo,nombre_tienda,cantidad,cantidad_corregida,observaciones,fecha,usuario,region,tamano,color,proveedor,tipo_ucrs,placa) VALUES (%s,%s,%s,%s,%s)",(request.form['tipo'],request.form['nombre_tienda'],int(request.form['cantidad']),int(request.form['cantidad']),request.form.get('observaciones',''),datetime.now().isoformat(sep=' ',timespec='minutes'),session['user'],request.form.get('region',''),request.form.get('tamano',''),request.form.get('color',''),request.form.get('proveedor',''),request.form.get('tipo_ucrs',''),request.form.get('placa','')))
         return redirect('/')
     import json
     tiendas_json=[{"region":safe(t,'r_nombre'),"tienda":safe(t,'t_nombre')} for t in tiendas_all]
@@ -124,8 +115,7 @@ def nuevo():
 @app.route('/verificar/<int:id>/<string:tipo>')
 @login_required
 def verificar(id,tipo):
-    execute("UPDATE movimientos SET verif_tienda=%s WHERE id=%s",(1 if tipo=='tienda' else 0, id))
-    return redirect('/')
+    execute("UPDATE movimientos SET verif_tienda=%s WHERE id=%s",(1 if tipo=='tienda' else 0, id)); return redirect('/')
 
 @app.route('/editar_cantidad', methods=['POST'])
 @login_required
@@ -164,8 +154,7 @@ def exportar():
     movs=fetchall("SELECT * FROM movimientos ORDER BY fecha DESC")
     wb=openpyxl.Workbook(); ws=wb.active
     ws.append(["Fecha","Region","Tienda","Cantidad","Corregida","Placa","Tipo UCR","Tam","Color","Proveedor","Obs","Usuario"])
-    for m in movs:
-        ws.append([safe(m,'fecha'),safe(m,'region'),safe(m,'nombre_tienda'),safe(m,'cantidad'),safe(m,'cantidad_corregida'),safe(m,'placa'),safe(m,'tipo_ucrs'),safe(m,'tamano'),safe(m,'color'),safe(m,'proveedor'),safe(m,'observaciones'),safe(m,'usuario')])
+    for m in movs: ws.append([safe(m,'fecha'),safe(m,'region'),safe(m,'nombre_tienda'),safe(m,'cantidad'),safe(m,'cantidad_corregida'),safe(m,'placa'),safe(m,'tipo_ucrs'),safe(m,'tamano'),safe(m,'color'),safe(m,'proveedor'),safe(m,'observaciones'),safe(m,'usuario')])
     wb.save("reporte.xlsx"); return send_file("reporte.xlsx", as_attachment=True)
 
 with app.app_context(): init_db()
