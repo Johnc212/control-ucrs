@@ -1,4 +1,4 @@
-# Control-UCR'S - FINAL CORREGIDO 13 PLACEHOLDERS + LISTAS PLEGABLES
+# Control-UCR'S - CORREGIDO 13 PARAMETROS - FINAL
 import os, sqlite3
 from flask import Flask, request, redirect, session, render_template_string, g, send_file
 from datetime import datetime
@@ -109,7 +109,8 @@ def nuevo():
     regiones=fetchall("SELECT * FROM regiones ORDER BY nombre")
     tiendas_all=fetchall("SELECT tiendas.nombre as t_nombre, regiones.nombre as r_nombre FROM tiendas JOIN regiones ON tiendas.region_id=regiones.id")
     if request.method=='POST':
-        execute("INSERT INTO movimientos (tipo,nombre_tienda,cantidad,cantidad_corregida,observaciones,fecha,usuario,region,tamano,color,proveedor,tipo_ucrs,placa) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)",(request.form['tipo'],request.form['nombre_tienda'],int(request.form['cantidad']),int(request.form['cantidad']),request.form.get('observaciones',''),datetime.now().isoformat(sep=' ',timespec='minutes'),session['user'],request.form.get('region',''),request.form.get('tamano',''),request.form.get('color',''),request.form.get('proveedor',''),request.form.get('tipo_ucrs',''),request.form.get('placa','')))
+        # AQUI ESTABA EL ERROR - AHORA SON 13 %s
+        execute("INSERT INTO movimientos (tipo,nombre_tienda,cantidad,cantidad_corregida,observaciones,fecha,usuario,region,tamano,color,proveedor,tipo_ucrs,placa) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",(request.form['tipo'],request.form['nombre_tienda'],int(request.form['cantidad']),int(request.form['cantidad']),request.form.get('observaciones',''),datetime.now().isoformat(sep=' ',timespec='minutes'),session['user'],request.form.get('region',''),request.form.get('tamano',''),request.form.get('color',''),request.form.get('proveedor',''),request.form.get('tipo_ucrs',''),request.form.get('placa','')))
         return redirect('/')
     import json
     tiendas_json=[{"region":safe(t,'r_nombre'),"tienda":safe(t,'t_nombre')} for t in tiendas_all]
