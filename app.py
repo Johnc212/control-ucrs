@@ -1,4 +1,4 @@
-# Control-UCR'S - FINAL CON LISTAS PLEGABLES - 13 %s CORREGIDO
+# Control-UCR'S - FINAL CORREGIDO 13 PLACEHOLDERS + LISTAS PLEGABLES
 import os, sqlite3
 from flask import Flask, request, redirect, session, render_template_string, g, send_file
 from datetime import datetime
@@ -109,7 +109,6 @@ def nuevo():
     regiones=fetchall("SELECT * FROM regiones ORDER BY nombre")
     tiendas_all=fetchall("SELECT tiendas.nombre as t_nombre, regiones.nombre as r_nombre FROM tiendas JOIN regiones ON tiendas.region_id=regiones.id")
     if request.method=='POST':
-        # 13 COLUMNAS = 13 %s - YA CORREGIDO
         execute("INSERT INTO movimientos (tipo,nombre_tienda,cantidad,cantidad_corregida,observaciones,fecha,usuario,region,tamano,color,proveedor,tipo_ucrs,placa) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)",(request.form['tipo'],request.form['nombre_tienda'],int(request.form['cantidad']),int(request.form['cantidad']),request.form.get('observaciones',''),datetime.now().isoformat(sep=' ',timespec='minutes'),session['user'],request.form.get('region',''),request.form.get('tamano',''),request.form.get('color',''),request.form.get('proveedor',''),request.form.get('tipo_ucrs',''),request.form.get('placa','')))
         return redirect('/')
     import json
@@ -122,12 +121,10 @@ def nuevo():
     <input type='hidden' name='tipo' value='{tipo}'>
     <select id='regionSelect' name='region' class='form-select mb-2' required><option value=''>Región</option>{opciones}</select>
     <select id='tiendaSelect' name='nombre_tienda' class='form-select mb-3' required><option value=''>Tienda</option></select>
-
     <div class='row g-2 mb-2'>
         <div class='col-4'><input name='cantidad' type='number' class='form-control' placeholder='Cantidad' required></div>
         <div class='col-8'><input name='placa' class='form-control' placeholder='Placa' required></div>
     </div>
-
     <div class='row g-2 mb-2'>
         <div class='col-4'>
             <select name='tipo_ucrs' class='form-select' required>
@@ -146,7 +143,6 @@ def nuevo():
         </div>
         <div class='col-4'><input name='color' class='form-control' placeholder='Color'></div>
     </div>
-
     <div class='row g-2 mb-3'>
         <div class='col-6'>
             <select name='proveedor' class='form-select' required>
@@ -157,7 +153,6 @@ def nuevo():
         </div>
         <div class='col-6'><input name='observaciones' class='form-control' placeholder='Obs'></div>
     </div>
-
     <button class='btn w-100 btn-lg' style='background:#E70A29;color:#fff;font-weight:800'>Guardar</button>
     </form></div>
     <script>
