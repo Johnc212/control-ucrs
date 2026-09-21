@@ -1,4 +1,4 @@
-# Control-UCR'S - FINAL DEFINITIVO - 13 VALORES - COMPATIBLE PYTHON 3.14
+# Control-UCR'S - FINAL CON LISTAS PLEGABLES - 13 %s CORREGIDO
 import os, sqlite3
 from flask import Flask, request, redirect, session, render_template_string, g, send_file
 from datetime import datetime
@@ -20,7 +20,6 @@ def get_db():
             except:
                 import psycopg
                 db = psycopg.connect(DATABASE_URL, sslmode='require')
-                db.autocommit = False
             g._is_postgres = True
         else:
             db = sqlite3.connect('ucrs_local.db')
@@ -110,13 +109,66 @@ def nuevo():
     regiones=fetchall("SELECT * FROM regiones ORDER BY nombre")
     tiendas_all=fetchall("SELECT tiendas.nombre as t_nombre, regiones.nombre as r_nombre FROM tiendas JOIN regiones ON tiendas.region_id=regiones.id")
     if request.method=='POST':
-        # CORREGIDO: 13 columnas = 13 %s
+        # 13 COLUMNAS = 13 %s - YA CORREGIDO
         execute("INSERT INTO movimientos (tipo,nombre_tienda,cantidad,cantidad_corregida,observaciones,fecha,usuario,region,tamano,color,proveedor,tipo_ucrs,placa) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)",(request.form['tipo'],request.form['nombre_tienda'],int(request.form['cantidad']),int(request.form['cantidad']),request.form.get('observaciones',''),datetime.now().isoformat(sep=' ',timespec='minutes'),session['user'],request.form.get('region',''),request.form.get('tamano',''),request.form.get('color',''),request.form.get('proveedor',''),request.form.get('tipo_ucrs',''),request.form.get('placa','')))
         return redirect('/')
     import json
     tiendas_json=[{"region":safe(t,'r_nombre'),"tienda":safe(t,'t_nombre')} for t in tiendas_all]
     opciones=''.join([f"<option value='{safe(r,'nombre')}'>{safe(r,'nombre')}</option>" for r in regiones])
-    html=f"<div class='card p-4 mx-auto shadow' style='max-width:540px;border-radius:14px'><h5 class='fw-bold' style='color:#E70A29'>{'CEDI → TIENDA' if tipo=='egreso' else 'TIENDA → CEDI'}</h5><form method='post'><input type='hidden' name='tipo' value='{tipo}'><select id='regionSelect' name='region' class='form-select mb-2' required><option value=''>Región</option>{opciones}</select><select id='tiendaSelect' name='nombre_tienda' class='form-select mb-3' required><option value=''>Tienda</option></select><div class='row g-2 mb-2'><div class='col-4'><input name='cantidad' type='number' class='form-control' placeholder='Cantidad' required></div><div class='col-8'><input name='placa' class='form-control' placeholder='Placa' required></div></div><div class='row g-2 mb-2'><div class='col-4'><input name='tipo_ucrs' class='form-control' placeholder='Tipo UCR'></div><div class='col-4'><input name='tamano' class='form-control' placeholder='Tamaño'></div><div class='col-4'><input name='color' class='form-control' placeholder='Color'></div></div><div class='row g-2 mb-3'><div class='col-6'><input name='proveedor' class='form-control' placeholder='Proveedor'></div><div class='col-6'><input name='observaciones' class='form-control' placeholder='Obs'></div></div><button class='btn w-100 btn-lg' style='background:#E70A29;color:#fff;font-weight:800'>Guardar</button></form></div><script>const tiendas={json.dumps(tiendas_json)};document.getElementById('regionSelect').addEventListener('change',function(){{let r=this.value;let sel=document.getElementById('tiendaSelect');sel.innerHTML='<option value=>Tienda</option>';tiendas.filter(t=>t.region===r).forEach(t=>{{let o=document.createElement('option');o.value=t.tienda;o.textContent=t.tienda;sel.appendChild(o);}})}});</script>"
+    html=f"""
+    <div class='card p-4 mx-auto shadow' style='max-width:540px;border-radius:14px'>
+    <h5 class='fw-bold mb-3' style='color:#E70A29'>{'CEDI → TIENDA' if tipo=='egreso' else 'TIENDA → CEDI'}</h5>
+    <form method='post'>
+    <input type='hidden' name='tipo' value='{tipo}'>
+    <select id='regionSelect' name='region' class='form-select mb-2' required><option value=''>Región</option>{opciones}</select>
+    <select id='tiendaSelect' name='nombre_tienda' class='form-select mb-3' required><option value=''>Tienda</option></select>
+
+    <div class='row g-2 mb-2'>
+        <div class='col-4'><input name='cantidad' type='number' class='form-control' placeholder='Cantidad' required></div>
+        <div class='col-8'><input name='placa' class='form-control' placeholder='Placa' required></div>
+    </div>
+
+    <div class='row g-2 mb-2'>
+        <div class='col-4'>
+            <select name='tipo_ucrs' class='form-select' required>
+                <option value=''>Tipo UCR</option>
+                <option value='Canastillas'>Canastillas</option>
+                <option value='Estibas'>Estibas</option>
+            </select>
+        </div>
+        <div class='col-4'>
+            <select name='tamano' class='form-select' required>
+                <option value=''>Tamaño</option>
+                <option value='Grande'>Grande</option>
+                <option value='Mediana'>Mediana</option>
+                <option value='Pequeña'>Pequeña</option>
+            </select>
+        </div>
+        <div class='col-4'><input name='color' class='form-control' placeholder='Color'></div>
+    </div>
+
+    <div class='row g-2 mb-3'>
+        <div class='col-6'>
+            <select name='proveedor' class='form-select' required>
+                <option value=''>Proveedor</option>
+                <option value='D1'>D1</option>
+                <option value='Proveedor'>Proveedor</option>
+            </select>
+        </div>
+        <div class='col-6'><input name='observaciones' class='form-control' placeholder='Obs'></div>
+    </div>
+
+    <button class='btn w-100 btn-lg' style='background:#E70A29;color:#fff;font-weight:800'>Guardar</button>
+    </form></div>
+    <script>
+    const tiendas={json.dumps(tiendas_json)};
+    document.getElementById('regionSelect').addEventListener('change',function(){{
+        let r=this.value;let sel=document.getElementById('tiendaSelect');
+        sel.innerHTML='<option value=>Tienda</option>';
+        tiendas.filter(t=>t.region===r).forEach(t=>{{let o=document.createElement('option');o.value=t.tienda;o.textContent=t.tienda;sel.appendChild(o);}})
+    }});
+    </script>
+    """
     return render_template_string(BASE, content=html)
 
 @app.route('/verificar/<int:id>/<string:tipo>')
