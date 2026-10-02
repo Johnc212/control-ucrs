@@ -1,4 +1,4 @@
-# Control-UCR'S - TODO COMPLETO - ADMIN VE TIENDA->CEDI - LISTAS PLEGABLES
+# Control-UCR'S - FINAL DEFINITIVO - 13 %s CORREGIDO - ADMIN VE DEVOLUCIONES
 import os, sqlite3
 from flask import Flask, request, redirect, session, render_template_string, g, send_file
 from datetime import datetime
@@ -93,28 +93,16 @@ def index():
     movs=fetchall("SELECT * FROM movimientos ORDER BY fecha DESC")
     eg=[m for m in movs if safe(m,'tipo')=='egreso']
     ing=[m for m in movs if safe(m,'tipo')=='ingreso']
-
     def card(m, color_borde="#dee2e6"):
         mid=safe(m,'id'); orig=safe(m,'cantidad'); corr=safe(m,'cantidad_corregida')
         mostrar=corr if corr not in [None,"",0,"0"] else orig
         chk='checked' if safe(m,'verif_tienda') else ''; t='no_tienda' if chk else 'tienda'
         return f"<div class='card-mov p-2 d-flex align-items-center' style='border-left:5px solid {color_borde}'><div style='flex:1'><div><b>{safe(m,'nombre_tienda')}</b> <small class='text-muted'>({safe(m,'region')}) - {safe(m,'placa')}</small></div><small>{safe(m,'tipo_ucrs')} | {safe(m,'tamano')} | {safe(m,'proveedor')} | Cant: <b>{orig}</b></small><br><small class='text-muted'>{safe(m,'fecha')} - {safe(m,'usuario')}</small></div><div style='width:170px' class='text-end'><label class='border rounded-pill px-2 py-1 bg-light' style='font-size:.75rem'><input type='checkbox' {chk} onchange=\"location.href='/verificar/{mid}/{t}'\"> check tienda</label><form method='post' action='/editar_cantidad'><input type='hidden' name='id' value='{mid}'><input type='number' name='cantidad_corregida' value='{mostrar}' class='form-control form-control-sm rounded-pill mt-1 text-center' onchange='this.form.submit()'></form></div></div>"
-
     lista_egreso = "".join([card(m, "#E70A29") for m in eg]) or "<div class='p-3 text-center bg-white rounded text-muted'>Sin despachos CEDI → TIENDA</div>"
     lista_ingreso = "".join([card(m, "#198754") for m in ing]) or "<div class='p-3 text-center bg-white rounded text-muted'>Sin devoluciones TIENDA → CEDI</div>"
-
     role=session.get('role')
     botones="<div style='position:fixed;bottom:40px;left:0;right:0;background:#fff;padding:12px;display:flex;gap:10px;justify-content:center;z-index:1000;border-top:2px solid #eee'><a href='/nuevo?tipo=egreso' class='btn btn-dark px-4 fw-bold'>CEDI → TIENDA</a><a href='/nuevo?tipo=ingreso' class='btn btn-outline-dark px-4 fw-bold'>TIENDA → CEDI</a></div>" if role=='admin' else "<div style='position:fixed;bottom:40px;left:0;right:0;background:#E70A29;padding:12px;display:flex;justify-content:center;z-index:1000'><a href='/nuevo?tipo=ingreso' class='btn btn-light fw-bold px-5'>TIENDA-CEDI</a></div>"
-
-    contenido = f"""
-    <div class='header-cedi'>CEDI → TIENDA ({len(eg)})</div>
-    <div class='mt-2 mb-4'>{lista_egreso}</div>
-
-    <div class='header-cedi' style='background:#198754'>TIENDA → CEDI ({len(ing)}) - LO QUE DEVUELVE LA TIENDA</div>
-    <div class='mt-2'>{lista_ingreso}</div>
-
-    {botones}<div style='height:90px'></div>
-    """
+    contenido = f"<div class='header-cedi'>CEDI → TIENDA ({len(eg)})</div><div class='mt-2 mb-4'>{lista_egreso}</div><div class='header-cedi' style='background:#198754'>TIENDA → CEDI ({len(ing)}) - LO QUE DEVUELVE LA TIENDA</div><div class='mt-2'>{lista_ingreso}</div>{botones}<div style='height:90px'></div>"
     return render_template_string(BASE, content=contenido)
 
 @app.route('/nuevo', methods=['GET','POST'])
@@ -124,7 +112,8 @@ def nuevo():
     regiones=fetchall("SELECT * FROM regiones ORDER BY nombre")
     tiendas_all=fetchall("SELECT tiendas.nombre as t_nombre, regiones.nombre as r_nombre FROM tiendas JOIN regiones ON tiendas.region_id=regiones.id")
     if request.method=='POST':
-        execute("INSERT INTO movimientos (tipo,nombre_tienda,cantidad,cantidad_corregida,observaciones,fecha,usuario,region,tamano,color,proveedor,tipo_ucrs,placa) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)",(request.form['tipo'],request.form['nombre_tienda'],int(request.form['cantidad']),int(request.form['cantidad']),request.form.get('observaciones',''),datetime.now().isoformat(sep=' ',timespec='minutes'),session['user'],request.form.get('region',''),request.form.get('tamano',''),request.form.get('color',''),request.form.get('proveedor',''),request.form.get('tipo_ucrs',''),request.form.get('placa','')))
+        # 13 columnas = 13 %s - CORREGIDO
+        execute("INSERT INTO movimientos (tipo,nombre_tienda,cantidad,cantidad_corregida,observaciones,fecha,usuario,region,tamano,color,proveedor,tipo_ucrs,placa) VALUES (%s,%s,%s,%s,%s)",(request.form['tipo'],request.form['nombre_tienda'],int(request.form['cantidad']),int(request.form['cantidad']),request.form.get('observaciones',''),datetime.now().isoformat(sep=' ',timespec='minutes'),session['user'],request.form.get('region',''),request.form.get('tamano',''),request.form.get('color',''),request.form.get('proveedor',''),request.form.get('tipo_ucrs',''),request.form.get('placa','')))
         return redirect('/')
     import json
     tiendas_json=[{"region":safe(t,'r_nombre'),"tienda":safe(t,'t_nombre')} for t in tiendas_all]
