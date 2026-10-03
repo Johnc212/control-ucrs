@@ -1,4 +1,4 @@
-# Control-UCR'S - FINAL DEFINITIVO - 13 %s CORREGIDO
+# Control-UCR'S - FINAL DEFINITIVO - LOGIN FOTO + OPERADOR + 13 %s CORREGIDO
 import os, sqlite3
 from flask import Flask, request, redirect, session, render_template_string, g, send_file
 from datetime import datetime
@@ -73,16 +73,31 @@ def login_required(f):
         return f(*a,**k)
     return w
 
-BASE='''<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"><style>body{background:#e9ecef;padding-bottom:70px;font-family:system-ui}.header-cedi{background:#E70A29;color:#fff;padding:10px 14px;font-weight:900}.card-mov{background:#fff;border:1px solid #dee2e6;border-radius:10px;margin-bottom:8px}.footer{background:#111;color:#fff;text-align:center;padding:10px;position:fixed;bottom:0;left:0;right:0;z-index:999;font-size:.85rem}</style></head><body><nav class="navbar bg-white shadow-sm" style="border-bottom:5px solid #E70A29"><div class="container-fluid px-3"><b>Control-UCR'S</b><div class="d-flex gap-1 align-items-center"><small class="me-2">{{session.user}} ({{session.role}})</small><a href="/" class="btn btn-sm btn-dark">Inicio</a>{% if session.role=='admin' %}<a href="/configuracion" class="btn btn-sm btn-secondary">Config</a><a href="/exportar" class="btn btn-sm btn-success">Excel</a>{% endif %}<a href="/logout" class="btn btn-sm btn-outline-danger">Salir</a></div></div></nav><div class="container-fluid mt-3 px-2">{{content|safe}}</div><div class="footer">Desarrollado por John Carmona</div></body></html>'''
+BASE='''<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"><style>body{background:#e9ecef;padding-bottom:70px;font-family:system-ui}.header-cedi{background:#E70A29;color:#fff;padding:10px 14px;font-weight:900;border-radius:8px}.card-mov{background:#fff;border:1px solid #dee2e6;border-radius:10px;margin-bottom:8px}.footer{background:#111;color:#fff;text-align:center;padding:10px;position:fixed;bottom:0;left:0;right:0;z-index:999;font-size:.85rem}</style></head><body><nav class="navbar bg-white shadow-sm" style="border-bottom:5px solid #E70A29"><div class="container-fluid px-3"><b>Control-UCR'S</b><div class="d-flex gap-1 align-items-center"><small class="me-2">{{session.user}} ({{session.role}})</small><a href="/" class="btn btn-sm btn-dark">Inicio</a>{% if session.role=='admin' %}<a href="/configuracion" class="btn btn-sm btn-secondary">Config</a><a href="/exportar" class="btn btn-sm btn-success">Excel</a>{% endif %}<a href="/logout" class="btn btn-sm btn-outline-danger">Salir</a></div></div></nav><div class="container-fluid mt-3 px-2">{{content|safe}}</div><div class="footer">Desarrollado por John Carmona</div></body></html>'''
 
 @app.route('/login', methods=['GET','POST'])
 def login():
     with app.app_context(): init_db()
+    error = ""
     if request.method=='POST':
         u=fetchone("SELECT * FROM users WHERE username=%s",(request.form['username'],))
         if u and check_password_hash(safe(u,'password'), request.form['password']):
             session['user']=safe(u,'username'); session['role']=safe(u,'role'); return redirect('/')
-    return '<html><head><meta name="viewport" content="width=device-width,initial-scale=1"><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"></head><body style="background:#f2f2f2"><div style="max-width:380px;margin:90px auto;background:#fff;padding:32px;border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.1);text-align:center"><h3 style="color:#E70A29;font-weight:900">Control-UCR\'S</h3><form method="post"><input name="username" class="form-control mb-2" placeholder="Usuario" required><input name="password" type="password" class="form-control mb-3" placeholder="Contraseña" required><button class="btn w-100 btn-lg" style="background:#E70A29;color:#fff;font-weight:700">Entrar</button></form><small class="text-muted d-block mt-3">admin / 1234</small></div></body></html>'
+        else:
+            error = "Usuario o contraseña incorrectos"
+    return f'''
+    <html><head><meta name="viewport" content="width=device-width,initial-scale=1"><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body{{background:#fff;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;font-family:system-ui}}
+       .login-box{{width:100%;max-width:340px;padding:20px;text-align:center}}
+       .login-title{{color:#D5001F;font-weight:900;font-size:28px;margin-bottom:18px;letter-spacing:-0.5px}}
+       .form-control{{border-radius:10px;border:1.5px solid #e5e7eb;padding:13px 14px;font-size:15px;background:#fff}}
+       .form-control:focus{{border-color:#D5001F;box-shadow:0 0 0 3px rgba(213,0,31,.15)}}
+       .btn-entrar{{background:#D5001F;color:#fff;border:none;border-radius:10px;padding:13px;font-weight:700;font-size:16px;width:100%;margin-top:6px}}
+       .btn-entrar:hover{{background:#b8001a;color:#fff}}
+       .badge-dev{{display:inline-block;margin-top:14px;background:#fff;border:1px solid #eee;border-radius:8px;padding:6px 14px;font-size:12px;color:#555;box-shadow:0 2px 8px rgba(0,0,0,.08)}}
+    </style></head><body><div class="login-box"><div class="login-title">Control-UCR'S</div><form method="post"><input name="username" class="form-control mb-3" placeholder="Usuario" required><input name="password" type="password" class="form-control mb-3" placeholder="Contraseña" required><button class="btn-entrar">Entrar</button>{f'<div class="text-danger small mt-2">{error}</div>' if error else ''}</form><div class="badge-dev">Desarrollado por John Carmona</div></div></body></html>
+    '''
 
 @app.route('/logout')
 def logout(): session.clear(); return redirect('/login')
@@ -93,34 +108,65 @@ def index():
     movs=fetchall("SELECT * FROM movimientos ORDER BY fecha DESC")
     eg=[m for m in movs if safe(m,'tipo')=='egreso']
     ing=[m for m in movs if safe(m,'tipo')=='ingreso']
-    def card(m, color_borde="#dee2e6"):
+    role=session.get('role','operador')
+
+    def card_cedi_tienda(m):
         mid=safe(m,'id'); orig=safe(m,'cantidad'); corr=safe(m,'cantidad_corregida')
         mostrar=corr if corr not in [None,"",0,"0"] else orig
         chk='checked' if safe(m,'verif_tienda') else ''; t='no_tienda' if chk else 'tienda'
-        return f"<div class='card-mov p-2 d-flex align-items-center' style='border-left:5px solid {color_borde}'><div style='flex:1'><div><b>{safe(m,'nombre_tienda')}</b> <small class='text-muted'>({safe(m,'region')}) - {safe(m,'placa')}</small></div><small>{safe(m,'tipo_ucrs')} | {safe(m,'tamano')} | {safe(m,'proveedor')} | Cant: <b>{orig}</b></small><br><small class='text-muted'>{safe(m,'fecha')} - {safe(m,'usuario')}</small></div><div style='width:170px' class='text-end'><label class='border rounded-pill px-2 py-1 bg-light' style='font-size:.75rem'><input type='checkbox' {chk} onchange=\"location.href='/verificar/{mid}/{t}'\"> check tienda</label><form method='post' action='/editar_cantidad'><input type='hidden' name='id' value='{mid}'><input type='number' name='cantidad_corregida' value='{mostrar}' class='form-control form-control-sm rounded-pill mt-1 text-center' onchange='this.form.submit()'></form></div></div>"
-    lista_egreso = "".join([card(m, "#E70A29") for m in eg]) or "<div class='p-3 text-center bg-white rounded text-muted'>Sin despachos CEDI → TIENDA</div>"
-    lista_ingreso = "".join([card(m, "#198754") for m in ing]) or "<div class='p-3 text-center bg-white rounded text-muted'>Sin devoluciones TIENDA → CEDI</div>"
-    role=session.get('role')
-    botones="<div style='position:fixed;bottom:40px;left:0;right:0;background:#fff;padding:12px;display:flex;gap:10px;justify-content:center;z-index:1000;border-top:2px solid #eee'><a href='/nuevo?tipo=egreso' class='btn btn-dark px-4 fw-bold'>CEDI → TIENDA</a><a href='/nuevo?tipo=ingreso' class='btn btn-outline-dark px-4 fw-bold'>TIENDA → CEDI</a></div>" if role=='admin' else "<div style='position:fixed;bottom:40px;left:0;right:0;background:#E70A29;padding:12px;display:flex;justify-content:center;z-index:1000'><a href='/nuevo?tipo=ingreso' class='btn btn-light fw-bold px-5'>TIENDA-CEDI</a></div>"
-    contenido = f"<div class='header-cedi'>CEDI → TIENDA ({len(eg)})</div><div class='mt-2 mb-4'>{lista_egreso}</div><div class='header-cedi' style='background:#198754'>TIENDA → CEDI ({len(ing)}) - LO QUE DEVUELVE LA TIENDA</div><div class='mt-2'>{lista_ingreso}</div>{botones}<div style='height:90px'></div>"
+        # Vista OPERADOR: check + lista plegable
+        if role=='operador':
+            opciones = ''.join([f"<option value='{i}' {'selected' if str(i)==str(mostrar) else ''}>{i}</option>" for i in range(0, int(orig)+20)])
+            return f"""
+            <div class='card-mov p-2 d-flex align-items-center' style='border-left:5px solid #E70A29;background:#fff'>
+                <div style='flex:1'><div><b>{safe(m,'nombre_tienda')}</b> <small class='text-muted'>({safe(m,'region')}) - {safe(m,'placa')}</small></div><small>{safe(m,'tipo_ucrs')} | {safe(m,'tamano')} | Enviado: <b>{orig}</b></small><br><small class='text-muted'>{safe(m,'fecha')}</small></div>
+                <div style='width:170px' class='text-end'>
+                    <label class='border rounded-pill px-2 py-1 bg-light' style='font-size:.72rem'><input type='checkbox' {chk} onchange="location.href='/verificar/{mid}/{t}'"> check tienda</label>
+                    <form method='post' action='/editar_cantidad'><input type='hidden' name='id' value='{mid}'>
+                    <select name='cantidad_corregida' class='form-select form-select-sm rounded-pill mt-1 text-center' onchange='this.form.submit()'>
+                        {opciones}
+                    </select>
+                    <small style='font-size:9px' class='text-muted'>Cant. recibida</small>
+                    </form>
+                </div>
+            </div>"""
+        else:
+            return f"<div class='card-mov p-2 d-flex align-items-center' style='border-left:5px solid #E70A29'><div style='flex:1'><div><b>{safe(m,'nombre_tienda')}</b> <small class='text-muted'>({safe(m,'region')}) - {safe(m,'placa')}</small></div><small>{safe(m,'tipo_ucrs')} | {safe(m,'tamano')} | Cant: <b>{orig}</b> → Recib: <b>{mostrar}</b></small><br><small class='text-muted'>{safe(m,'fecha')} - {safe(m,'usuario')}</small></div><div style='width:170px' class='text-end'><label class='border rounded-pill px-2 py-1 bg-light' style='font-size:.75rem'><input type='checkbox' {chk} onchange=\"location.href='/verificar/{mid}/{t}'\"> check tienda</label><form method='post' action='/editar_cantidad'><input type='hidden' name='id' value='{mid}'><input type='number' name='cantidad_corregida' value='{mostrar}' class='form-control form-control-sm rounded-pill mt-1 text-center' onchange='this.form.submit()'></form></div></div>"
+
+    def card_tienda_cedi(m):
+        mid=safe(m,'id'); orig=safe(m,'cantidad')
+        return f"<div class='card-mov p-2' style='border-left:5px solid #198754'><div><b>{safe(m,'nombre_tienda')}</b> <small class='text-muted'>({safe(m,'region')}) - {safe(m,'placa')}</small></div><small>{safe(m,'tipo_ucrs')} | {safe(m,'tamano')} | Cant: <b>{orig}</b></small><br><small class='text-muted'>{safe(m,'fecha')} - {safe(m,'usuario')}</small></div>"
+
+    lista_egreso = "".join([card_cedi_tienda(m) for m in eg]) or "<div class='p-3 text-center bg-white rounded text-muted'>Sin despachos CEDI → TIENDA</div>"
+    lista_ingreso = "".join([card_tienda_cedi(m) for m in ing]) or "<div class='p-3 text-center bg-white rounded text-muted'>Sin devoluciones TIENDA → CEDI</div>"
+
+    if role=='operador':
+        botones="<div style='position:fixed;bottom:40px;left:0;right:0;background:#E70A29;padding:12px;display:flex;justify-content:center;z-index:1000'><a href='/nuevo?tipo=ingreso' class='btn btn-light fw-bold px-5 rounded-pill'>TIENDA-CEDI</a></div>"
+    else:
+        botones="<div style='position:fixed;bottom:40px;left:0;right:0;background:#fff;padding:12px;display:flex;gap:10px;justify-content:center;z-index:1000;border-top:2px solid #eee'><a href='/nuevo?tipo=egreso' class='btn btn-dark px-4 fw-bold rounded-pill'>CEDI → TIENDA</a><a href='/nuevo?tipo=ingreso' class='btn btn-outline-dark px-4 fw-bold rounded-pill'>TIENDA → CEDI</a></div>"
+
+    contenido = f"<div class='header-cedi'>CEDI → TIENDA ({len(eg)}) - Operador solo check y cantidad recibida</div><div class='mt-2 mb-4'>{lista_egreso}</div><div class='header-cedi' style='background:#198754'>TIENDA → CEDI ({len(ing)}) - LO QUE DEVUELVE LA TIENDA</div><div class='mt-2'>{lista_ingreso}</div>{botones}<div style='height:90px'></div>"
     return render_template_string(BASE, content=contenido)
 
 @app.route('/nuevo', methods=['GET','POST'])
 @login_required
 def nuevo():
     tipo=request.args.get('tipo','egreso')
+    # Seguridad: operador solo puede crear ingreso
+    if session.get('role')=='operador' and tipo!='ingreso':
+        return redirect('/?tipo=ingreso')
     regiones=fetchall("SELECT * FROM regiones ORDER BY nombre")
     tiendas_all=fetchall("SELECT tiendas.nombre as t_nombre, regiones.nombre as r_nombre FROM tiendas JOIN regiones ON tiendas.region_id=regiones.id")
     if request.method=='POST':
-        # CORREGIDO: 13 columnas = 13 %s
-        execute("INSERT INTO movimientos (tipo,nombre_tienda,cantidad,cantidad_corregida,observaciones,fecha,usuario,region,tamano,color,proveedor,tipo_ucrs,placa) VALUES (%s,%s,%s,%s,%s)",(request.form['tipo'],request.form['nombre_tienda'],int(request.form['cantidad']),int(request.form['cantidad']),request.form.get('observaciones',''),datetime.now().isoformat(sep=' ',timespec='minutes'),session['user'],request.form.get('region',''),request.form.get('tamano',''),request.form.get('color',''),request.form.get('proveedor',''),request.form.get('tipo_ucrs',''),request.form.get('placa','')))
+        # CORREGIDO DEFINITIVO: 13 columnas = 13 %s
+        execute("INSERT INTO movimientos (tipo,nombre_tienda,cantidad,cantidad_corregida,observaciones,fecha,usuario,region,tamano,color,proveedor,tipo_ucrs,placa) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",(request.form['tipo'],request.form['nombre_tienda'],int(request.form['cantidad']),int(request.form['cantidad']),request.form.get('observaciones',''),datetime.now().isoformat(sep=' ',timespec='minutes'),session['user'],request.form.get('region',''),request.form.get('tamano',''),request.form.get('color',''),request.form.get('proveedor',''),request.form.get('tipo_ucrs',''),request.form.get('placa','')))
         return redirect('/')
     import json
     tiendas_json=[{"region":safe(t,'r_nombre'),"tienda":safe(t,'t_nombre')} for t in tiendas_all]
     opciones=''.join([f"<option value='{safe(r,'nombre')}'>{safe(r,'nombre')}</option>" for r in regiones])
     html=f"""
     <div class='card p-4 mx-auto shadow' style='max-width:540px;border-radius:14px'>
-    <h5 class='fw-bold mb-3' style='color:#E70A29'>{'CEDI → TIENDA' if tipo=='egreso' else 'TIENDA → CEDI'}</h5>
+    <h5 class='fw-bold mb-3' style='color:#E70A29'>{'CEDI → TIENDA (Solo Admin)' if tipo=='egreso' else 'TIENDA → CEDI'}</h5>
     <form method='post'>
     <input type='hidden' name='tipo' value='{tipo}'>
     <select id='regionSelect' name='region' class='form-select mb-2' required><option value=''>Región</option>{opciones}</select>
@@ -130,34 +176,15 @@ def nuevo():
         <div class='col-8'><input name='placa' class='form-control' placeholder='Placa' required></div>
     </div>
     <div class='row g-2 mb-2'>
-        <div class='col-4'>
-            <select name='tipo_ucrs' class='form-select' required>
-                <option value=''>Tipo UCR</option>
-                <option value='Canastillas'>Canastillas</option>
-                <option value='Estibas'>Estibas</option>
-            </select>
-        </div>
-        <div class='col-4'>
-            <select name='tamano' class='form-select' required>
-                <option value=''>Tamaño</option>
-                <option value='Grande'>Grande</option>
-                <option value='Mediana'>Mediana</option>
-                <option value='Pequeña'>Pequeña</option>
-            </select>
-        </div>
+        <div class='col-4'><select name='tipo_ucrs' class='form-select' required><option value=''>Tipo UCR</option><option value='Canastillas'>Canastillas</option><option value='Estibas'>Estibas</option></select></div>
+        <div class='col-4'><select name='tamano' class='form-select' required><option value=''>Tamaño</option><option value='Grande'>Grande</option><option value='Mediana'>Mediana</option><option value='Pequeña'>Pequeña</option></select></div>
         <div class='col-4'><input name='color' class='form-control' placeholder='Color'></div>
     </div>
     <div class='row g-2 mb-3'>
-        <div class='col-6'>
-            <select name='proveedor' class='form-select' required>
-                <option value=''>Proveedor</option>
-                <option value='D1'>D1</option>
-                <option value='Proveedor'>Proveedor</option>
-            </select>
-        </div>
+        <div class='col-6'><select name='proveedor' class='form-select' required><option value=''>Proveedor</option><option value='D1'>D1</option><option value='Proveedor'>Proveedor</option></select></div>
         <div class='col-6'><input name='observaciones' class='form-control' placeholder='Obs'></div>
     </div>
-    <button class='btn w-100 btn-lg' style='background:#E70A29;color:#fff;font-weight:800'>Guardar</button>
+    <button class='btn w-100 btn-lg' style='background:#E70A29;color:#fff;font-weight:800;border-radius:10px'>Guardar</button>
     </form></div>
     <script>
     const tiendas={json.dumps(tiendas_json)};
@@ -193,17 +220,20 @@ def configuracion():
         return redirect('/configuracion')
     regiones=fetchall("SELECT * FROM regiones ORDER BY nombre"); usuarios=fetchall("SELECT id, username, role FROM users ORDER BY username")
     opciones=''.join([f"<option value='{safe(r,'id')}'>{safe(r,'nombre')}</option>" for r in regiones])
-    lista_u="".join([f"<span class='badge bg-dark me-1 mb-1 p-2'>{safe(u,'username')} ({safe(u,'role')}) <a href='/borrar_usuario/{safe(u,'id')}' style='color:#ff6b6b'> X</a></span>" for u in usuarios])
+    lista_u="".join([f"<span class='badge bg-dark me-1 mb-1 p-2'>{safe(u,'username')} ({safe(u,'role')}) <a href='/borrar_usuario/{safe(u,'id')}' style='color:#ff6b6b;text-decoration:none'> X</a></span>" for u in usuarios])
     html=f"<div class='container' style='max-width:750px'><div class='card p-3 mb-3'><h6 style='color:#E70A29'>USUARIOS</h6><form method='post' class='row g-2'><input type='hidden' name='action' value='crear_usuario'><div class='col-4'><input name='new_username' class='form-control' placeholder='Usuario' required></div><div class='col-3'><input name='new_password' class='form-control' value='1234' required></div><div class='col-3'><select name='new_role' class='form-select'><option value='operador'>Operador</option><option value='admin'>Admin</option></select></div><div class='col-2'><button class='btn w-100' style='background:#E70A29;color:#fff'>Crear</button></div></form><div class='mt-3'>{lista_u}</div></div><div class='card p-3 mb-3'><h6 style='color:#E70A29'>REGIÓN</h6><form method='post' class='row g-2'><input type='hidden' name='action' value='crear_region'><div class='col-8'><input name='nueva_region' class='form-control'></div><div class='col-4'><button class='btn btn-success w-100'>Crear</button></div></form></div><div class='card p-3'><h6 style='color:#E70A29'>TIENDA</h6><form method='post' class='row g-2'><input type='hidden' name='action' value='crear_tienda'><div class='col-4'><select name='region_id' class='form-select'><option value=''>Región</option>{opciones}</select></div><div class='col-5'><input name='nueva_tienda' class='form-control' placeholder='Tienda'></div><div class='col-3'><button class='btn btn-primary w-100'>Crear</button></div></form></div><a href='/' class='btn btn-secondary w-100 mt-4'>Volver</a></div>"
     return render_template_string(BASE, content=html)
+
 @app.route('/borrar_usuario/<int:id>')
 @login_required
 def borrar_usuario(id): execute("DELETE FROM users WHERE id=%s",(id,)); return redirect('/configuracion')
+
 @app.route('/exportar')
 @login_required
 def exportar():
     movs=fetchall("SELECT * FROM movimientos ORDER BY fecha DESC"); wb=openpyxl.Workbook(); ws=wb.active; ws.append(["Fecha","Region","Tienda","Cantidad","Corregida","Placa","Tipo","Tam","Color","Proveedor","Obs","Usuario","Direccion"])
     for m in movs: ws.append([safe(m,'fecha'),safe(m,'region'),safe(m,'nombre_tienda'),safe(m,'cantidad'),safe(m,'cantidad_corregida'),safe(m,'placa'),safe(m,'tipo_ucrs'),safe(m,'tamano'),safe(m,'color'),safe(m,'proveedor'),safe(m,'observaciones'),safe(m,'usuario'),safe(m,'tipo')])
     wb.save("reporte.xlsx"); return send_file("reporte.xlsx", as_attachment=True)
+
 with app.app_context(): init_db()
 if __name__=='__main__': app.run(host='0.0.0.0', port=5001, debug=True)
